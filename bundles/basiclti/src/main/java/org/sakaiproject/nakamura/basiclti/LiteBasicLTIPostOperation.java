@@ -103,7 +103,7 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
    * Dependency injected from OSGi container.
    */
   @Reference
-  private transient Repository repository;
+  protected transient Repository repository;
 
   @Reference
   protected transient EventAdmin eventAdmin;
@@ -226,7 +226,7 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
     }
   }
 
-  private void createSensitiveNode(final Content parent, final Session userSession,
+  protected void createSensitiveNode(final Content parent, final Session userSession,
       Map<String, String> sensitiveData) {
     if (parent == null) {
       throw new IllegalArgumentException("Node parent==null");
@@ -247,19 +247,16 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
     Session adminSession = null;
     try {
       adminSession = repository.loginAdministrative();
-      final Content adminNode = new Content(adminNodePath, new HashMap<String, Object>());
-      // final Content adminNode = JcrUtils.deepGetOrCreateNode(adminSession,
-      // adminNodePath);
-      for (final Entry<String, String> entry : sensitiveData.entrySet()) {
-        adminNode.setProperty(entry.getKey(),
-            entry.getValue());
+      if (adminSession != null) {
+        final Content adminNode = new Content(adminNodePath,
+            new HashMap<String, Object>());
+        for (final Entry<String, String> entry : sensitiveData.entrySet()) {
+          adminNode.setProperty(entry.getKey(), entry.getValue());
+        }
+        adminSession.getContentManager().update(adminNode);
+        // ensure only admins can read the node
+        accessControlSensitiveNode(adminNodePath, adminSession, userSession.getUserId());
       }
-      adminSession.getContentManager().update(adminNode);
-      // ensure only admins can read the node
-      accessControlSensitiveNode(adminNodePath, adminSession, userSession.getUserId());
-      // if (adminSession.hasPendingChanges()) {
-      // adminSession.save();
-      // }
     } catch (AccessDeniedException e) {
       LOG.error(e.getLocalizedMessage(), e);
       throw new IllegalStateException(e);
@@ -281,10 +278,11 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
     if (!isAdminUser(userSession)) { // i.e. normal user
       try {
         final AccessControlManager acm = userSession.getAccessControlManager();
-        Permission[] userPrivs = acm.getPermissions(Security.ZONE_CONTENT, adminNodePath);
+        final Permission[] userPrivs = acm.getPermissions(Security.ZONE_CONTENT,
+            adminNodePath);
         if (userPrivs != null && userPrivs.length > 0) {
-          Set<Permission> invalidUserPrivileges = getInvalidUserPrivileges();
-          for (Permission privilege : userPrivs) {
+          final Set<Permission> invalidUserPrivileges = getInvalidUserPrivileges();
+          for (final Permission privilege : userPrivs) {
             if (invalidUserPrivileges.contains(privilege)) {
               invalidPrivileges = true;
               break;
@@ -312,9 +310,9 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
    * @throws StorageClientException
    * @throws AccessDeniedException
    */
-  private void accessControlSensitiveNode(final String sensitiveNodePath,
-      final Session adminSession, String currentUserId) throws StorageClientException,
-      AccessDeniedException {
+  protected void accessControlSensitiveNode(final String sensitiveNodePath,
+      final Session adminSession, final String currentUserId)
+      throws StorageClientException, AccessDeniedException {
 
     adminSession.getAccessControlManager().setAcl(
         Security.ZONE_CONTENT,
