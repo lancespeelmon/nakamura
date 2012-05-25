@@ -283,7 +283,7 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
         final AccessControlManager acm = userSession.getAccessControlManager();
         Permission[] userPrivs = acm.getPermissions(Security.ZONE_CONTENT, adminNodePath);
         if (userPrivs != null && userPrivs.length > 0) {
-          Set<Permission> invalidUserPrivileges = getInvalidUserPrivileges(acm);
+          Set<Permission> invalidUserPrivileges = getInvalidUserPrivileges();
           for (Permission privilege : userPrivs) {
             if (invalidUserPrivileges.contains(privilege)) {
               invalidPrivileges = true;
