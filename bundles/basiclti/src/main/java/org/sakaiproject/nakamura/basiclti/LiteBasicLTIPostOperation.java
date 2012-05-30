@@ -97,6 +97,9 @@ import javax.servlet.ServletException;
     @Property(name = "service.description", value = "Creates a sakai/basiclti settings node."),
     @Property(name = "service.vendor", value = "The Sakai Foundation") })
 public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
+  private static final String UTF_8 = "UTF-8";
+  private static final String BOOLEAN = "Boolean";
+  private static final String TYPE_HINT = "@TypeHint";
   private static final Logger LOG = LoggerFactory
       .getLogger(LiteBasicLTIPostOperation.class);
   /**
@@ -129,8 +132,10 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
     Content node = resource.adaptTo(Content.class);
     if (node == null) { // create the node
       if (resource instanceof SparseNonExistingResource) {
-        SparseNonExistingResource nonExistingResource = (SparseNonExistingResource) resource;
+        final SparseNonExistingResource nonExistingResource = (SparseNonExistingResource) resource;
         path = nonExistingResource.getTargetContentPath();
+      } else {
+        throw new IllegalStateException();
       }
       if (contentManager.exists(path)) {
         // I don't think we should end up here often if at all
@@ -152,7 +157,7 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
         while (keys.hasNext()) {
           final String key = keys.next();
           // ignore TypeHints for now; will be consulted later
-          if (key.endsWith("@TypeHint")) {
+          if (key.endsWith(TYPE_HINT)) {
             continue;
           }
           final String value = json.getString(key);
@@ -163,8 +168,8 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
               sensitiveData.put(key, value);
             } else {
               if (!unsupportedKeys.contains(key)) {
-                final String typeHint = key + "@TypeHint";
-                if (json.has(typeHint) && "Boolean".equals(json.getString(typeHint))) {
+                final String typeHint = key + TYPE_HINT;
+                if (json.has(typeHint) && BOOLEAN.equals(json.getString(typeHint))) {
                   node.setProperty(key, Boolean.valueOf(value));
                 } else {
                   node.setProperty(key, value);
@@ -179,7 +184,7 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
         for (final Entry<String, RequestParameter[]> entry : requestParameterMap
             .entrySet()) {
           final String key = entry.getKey();
-          if (key.endsWith("@TypeHint")) {
+          if (key.endsWith(TYPE_HINT)) {
             continue;
           }
           final RequestParameter[] requestParameterArray = entry.getValue();
@@ -187,7 +192,7 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
             if (requestParameterArray.length > 1) {
               throw new ServletException("Multi-valued parameters are not supported");
             } else {
-              final String value = requestParameterArray[0].getString("UTF-8");
+              final String value = requestParameterArray[0].getString(UTF_8);
               if ("".equals(value)) {
                 removeProperty(node, key);
               } else { // has a valid value
@@ -195,10 +200,10 @@ public class LiteBasicLTIPostOperation extends AbstractSparsePostOperation {
                   sensitiveData.put(key, value);
                 } else {
                   if (!unsupportedKeys.contains(key)) {
-                    final String typeHint = key + "@TypeHint";
+                    final String typeHint = key + TYPE_HINT;
                     if (requestParameterMap.containsKey(typeHint)
-                        && "Boolean".equals(requestParameterMap.get(typeHint)[0]
-                            .getString())) {
+                        && BOOLEAN.equals(requestParameterMap.get(typeHint)[0]
+                            .getString(UTF_8))) {
                       node.setProperty(key, Boolean.valueOf(value));
                     } else {
                       node.setProperty(key, value);
