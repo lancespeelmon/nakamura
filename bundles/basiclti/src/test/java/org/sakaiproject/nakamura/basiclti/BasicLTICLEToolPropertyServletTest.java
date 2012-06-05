@@ -20,7 +20,7 @@ package org.sakaiproject.nakamura.basiclti;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,12 +62,12 @@ public class BasicLTICLEToolPropertyServletTest {
   public void testDoGet() throws ServletException, IOException {
     basicLTICLEToolPropertyServlet.doGet(request, response);
     verify(printWriter, atLeastOnce()).write(anyString());
-    verify(printWriter, atMost(1)).write(contains("toolList"));
-    verify(printWriter, atMost(1)).write(
+    verify(printWriter, times(1)).write(contains("toolList"));
+    verify(printWriter, times(1)).write(
         contains(CLEVirtualToolDataProvider.DEFAULT_TOOL_LIST[0]));
-    verify(printWriter, atMost(1)).write(
+    verify(printWriter, times(1)).write(
         contains(CLEVirtualToolDataProvider.DEFAULT_TOOL_LIST[1]));
-    verify(printWriter, atMost(1)).write(
+    verify(printWriter, times(1)).write(
         contains(CLEVirtualToolDataProvider.DEFAULT_TOOL_LIST[2]));
   }
 
