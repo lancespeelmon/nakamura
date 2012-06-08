@@ -503,6 +503,19 @@ public class LiteBasicLTIConsumerServlet extends SlingAllMethodsServlet {
 
       final Map<String, String> cleanProps = BasicLTIUtil.cleanupProperties(launchProps,
           BLACKLIST);
+      /*
+       * KERN-2733 adding CLE tool to page results in 500 error. This is probably a
+       * configuration issue but the message should point that out instead of an NPE.
+       */
+      if (ltiUrl == null || "".equals(ltiUrl)) {
+        throw new IllegalStateException("ltiUrl null or empty!");
+      }
+      if (ltiKey == null || "".equals(ltiKey)) {
+        throw new IllegalStateException("ltiKey null or empty!");
+      }
+      if (ltiSecret == null || "".equals(ltiSecret)) {
+        throw new IllegalStateException("ltiSecret null or empty!");
+      }
       final Map<String, String> signedProperties = BasicLTIUtil.signProperties(
           cleanProps, ltiUrl, "POST", ltiKey, ltiSecret, instanceGuid,
           instanceDescription, instanceUrl, instanceName, instanceContactEmail);
