@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,20 +37,23 @@ import org.mockito.runners.MockitoJUnitRunner;
 import javax.servlet.http.HttpServletResponse;
 
 @RunWith(MockitoJUnitRunner.class)
-public class UserGroupManagementOptingServletTest {
-  UserGroupManagementOptingServlet userGroupManagementOptingServlet;
+public class SparseCreateServletTest {
+  SparseCreateServlet sparseCreateServlet;
   @Mock
   SlingHttpServletRequest request;
   @Mock
   SlingHttpServletResponse response;
   @Mock
   Resource resource;
+  @Mock
+  ResourceResolver resourceResolver;
 
   @Before
   public void setUp() throws Exception {
     when(request.getResource()).thenReturn(resource);
     when(resource.getPath()).thenReturn("mHAY1acZec/id470170/id7577541/sakai2gradebook");
-    userGroupManagementOptingServlet = new UserGroupManagementOptingServlet();
+    when(request.getResourceResolver()).thenReturn(resourceResolver);
+    sparseCreateServlet = new SparseCreateServlet();
   }
 
   /**
@@ -58,7 +62,7 @@ public class UserGroupManagementOptingServletTest {
    */
   @Test
   public void testAcceptsNonUserManagementPath() {
-    final boolean accept = userGroupManagementOptingServlet.accepts(request);
+    final boolean accept = sparseCreateServlet.accepts(request);
     verify(request).getResource();
     verify(resource).getPath();
     assertFalse(accept);
@@ -72,7 +76,7 @@ public class UserGroupManagementOptingServletTest {
   public void testAcceptsNullPath() {
     when(resource.getPath()).thenReturn(null);
 
-    final boolean accept = userGroupManagementOptingServlet.accepts(request);
+    final boolean accept = sparseCreateServlet.accepts(request);
     verify(request).getResource();
     verify(resource).getPath();
     assertFalse(accept);
@@ -86,7 +90,7 @@ public class UserGroupManagementOptingServletTest {
   public void testAcceptsUserManagementPath() {
     when(resource.getPath()).thenReturn("/system/userManager/user");
 
-    final boolean accept = userGroupManagementOptingServlet.accepts(request);
+    final boolean accept = sparseCreateServlet.accepts(request);
     verify(request).getResource();
     verify(resource).getPath();
     assertTrue(accept);
@@ -100,7 +104,7 @@ public class UserGroupManagementOptingServletTest {
   public void testAcceptsGroupManagementPath() {
     when(resource.getPath()).thenReturn("/system/userManager/group");
 
-    final boolean accept = userGroupManagementOptingServlet.accepts(request);
+    final boolean accept = sparseCreateServlet.accepts(request);
     verify(request).getResource();
     verify(resource).getPath();
     assertTrue(accept);
@@ -115,7 +119,9 @@ public class UserGroupManagementOptingServletTest {
    */
   @Test
   public void testDoPost() throws Exception {
-    userGroupManagementOptingServlet.doPost(request, response);
+    when(resource.getPath()).thenReturn("/system/userManager/user");
+
+    sparseCreateServlet.doPost(request, response);
     verify(response).sendError(eq(HttpServletResponse.SC_NOT_FOUND), anyString());
   }
 }
