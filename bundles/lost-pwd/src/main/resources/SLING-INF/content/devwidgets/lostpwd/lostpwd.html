@@ -1,0 +1,79 @@
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="/devwidgets/lostpwd/css/lostpwd.css"/>
+
+<!-- ERROR MESSAGES -->
+<div style="display:none">
+</div>
+
+<div style="display:none" id="lostpwd_change_dialog" class="s3d-dialog s3d-dialog-container">
+    <div class="s3d-dialog-close jqmClose"></div>
+    <h1 class="s3d-dialog-header">__MSG__WIDGET_TITLE__</h1>
+
+    <!-- ERRORS AND MESSAGES -->
+    <span id="lostpassword_error_passNotEqual" style="display:none;">__MSG__NEW_PASSWORDS_ARENT_EQUAL__</span>
+    <span id="lostpassword_error_failChangePass" style="display:none;">__MSG__CHANGING_PASSWORD_FAILED__</span>
+    <span id="lostpassword_error_failChangePassBody" style="display:none;">__MSG__CHANGING_PASSWORD_FAILED_BODY__</span>
+    <span id="lostpassword_message_passChanged" style="display:none;">__MSG__PASSWORD_CHANGED__</span>
+    <span id="lostpassword_message_passChangedBody" style="display:none;">__MSG__PASSWORD_CHANGED_BODY__</span>
+    <span id="lostpassword_error_invalidPass" style="display:none;">__MSG__PASSWORD_SHOULD_BE_AT_LEAST_FIVE_CHARACTERS_LONG__</span>
+    <span id="lostpassword_error_failChangeLang" style="display:none;">__MSG__CHANGING_REGIONAL_SETTINGS_FAILED__</span>
+
+    <span id="lostpassword_reset_success" style="display:none;">__MSG__RESETTING_PASSWORD_SUCCESS__</span>
+    <span id="lostpassword_reset_success_body" style="display:none;">__MSG__RESETTING_PASSWORD_SUCCESS_BODY__</span>
+    <span id="lostpassword_error_fail_Reset" style="display:none;">__MSG__RESETTING_PASSWORD_FAILED__</span>
+    <span id="lostpwd_reset_error_403" style="display:none;">__MSG__RESETTING_PASSWORD_FAILED_NOT_VERIFIED__</span>
+    <span id="lostpwd_reset_error_404" style="display:none;">__MSG__RESETTING_PASSWORD_FAILED_UNKNOWN_USER__</span>
+    <span id="lostpwd_reset_error_500" style="display:none;">__MSG__RESETTING_PASSWORD_FAILED_UNKNOWN_ERROR__</span>
+
+    <span id="lostpassword_error_failRecover" style="display:none;">__MSG__RECOVERING_PASSWORD_FAILED__</span>
+    <span id="lostpassword_error_failRecoverBody_UNKNOWN" style="display:none;">__MSG__RECOVERING_PASSWORD_FAILED_BODY_UNKNOWN__</span>
+    <span id="lostpassword_error_failRecoverBody_INVALID_URL" style="display:none;">__MSG__RECOVERING_PASSWORD_FAILED_BODY_INVALID_URL__</span>
+
+
+    <!-- Account Preferences -->
+    <div class="fl-container-flex">
+        <div class="fl-fix fl-centered lostpassword">
+            <div>
+                <!-- CONTENT -->
+                <div class="fl-push password" id="lostpassword_changePassContainer">
+                    <h4 class="section_header">
+                        __MSG__PASSWORD__:
+                    </h4>
+                    <form id="lostpassword_change" class="lostpassword-form" method="POST" action="#">
+                        <div class="form-item">
+                            <label for="new_pass">__MSG__NEW_PASSWORD__:</label>
+                            <input maxlength="255" type="password" id="new_pass" name="new_pass" class="password-preferences-input" />
+                        </div>
+                        <div class="form-item">
+                            <label for="retype_pass">__MSG__RETYPE_NEW_PASSWORD__:</label>
+                            <input maxlength="255" type="password" id="retype_pass" name="retype_pass" class="password-preferences-input" />
+                        </div>
+                        <div class="save-preferences">
+                            <button type="submit" id="lostpassword_saveNewPass" class="s3d-button s3d-overlay-button">__MSG__SAVE_CHANGES__</button>
+                            <div class="lostpassword_general_message" id="lostpassword_general_message_pass"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="fl-push"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="display:none;width:100%" id="lostpwd_recover_pwd">
+    <form id="lostpwd_recover_pwd_form" method="POST">
+	    <hr class="s3d-split-line fl-push"/>
+		<label for="lostpwd_recover_pwd_username_email">__MSG__USERNAME_OR_EMAIL__</label>
+		<input type="text" alt="__MSG__USERNAME__" maxlength="255" id="lostpwd_recover_pwd_username_email" 
+		   name="lostpwd_recover_pwd_username_email"/>
+        <div class="lostpassword_general_message" id="lostpassword_general_message_pass"></div>
+	    <hr class="s3d-split-line fl-push"/>
+	    <button type="submit" class="s3d-button s3d-overlay-button no-pad" 
+	        id="lostpwd_recover_pwd_button">__MSG__RECOVER_PASSWORD__</button>
+	    <hr class="fl-push fl-hidden"/>
+    </form>
+</div>
+
+
+<!-- JAVASCRIPT -->
+<script type="text/javascript" src="/devwidgets/lostpwd/javascript/lostpwd.js"></script>

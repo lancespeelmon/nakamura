@@ -1,0 +1,14 @@
+{
+    "description":"Verify Your Email widget",
+    "id":"emailverify",
+    "i18n": {
+        "default": {
+          "bundle": "/devwidgets/emailverify/bundles/default.properties",
+          "name": "Email Verify",
+          "description": "Email Verify widget"
+        }
+     },
+    "type":"rsmart",
+    "enabled":true,
+    "url":"/devwidgets/emailverify/emailverify.html"
+}

@@ -1,0 +1,6 @@
+{
+    "sakai:content-type": "text/plain",
+    "sling:resourceType": "sakai/template",
+    "sakai:template": "${sender},\n\nYour account is about to expire. Please verify your email by following this link:\n\n${link}",
+    "jcr:primaryType": "sling:Folder"
+}

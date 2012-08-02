@@ -1,0 +1,6 @@
+{
+    "sakai:content-type": "text/plain",
+    "sling:resourceType": "sakai/template",
+    "sakai:template": "${sender},\n\nPlease verify your changed email by following this link:\n\n${link}",
+    "jcr:primaryType": "sling:Folder"
+}
