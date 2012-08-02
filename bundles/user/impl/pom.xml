@@ -71,6 +71,12 @@
       <artifactId>org.sakaiproject.nakamura.core</artifactId>
       <scope>provided</scope>
     </dependency>
+     <dependency>
+       <groupId>org.sakaiproject.nakamura</groupId>
+      <artifactId>org.sakaiproject.nakamura.formauth</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.resource</artifactId>

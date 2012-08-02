@@ -650,4 +650,26 @@ public final class TrustedTokenServiceImpl implements TrustedTokenService {
     }
   }
 
+
+  public void switchToUser(String userId, HttpServletRequest request,
+      HttpServletResponse response) {
+    
+    String tokenType = TrustedTokenTypes.AUTHENTICATED_TRUST;
+    
+    if (usingSession) {
+      HttpSession session = request.getSession(true);
+      if (session != null) {
+        LOG.debug("Injecting Credentials into Session for " + userId);
+        session.setAttribute(SA_AUTHENTICATION_CREDENTIALS, createCredentials(userId, tokenType));
+      }
+    } else {
+      addCookie(response, userId, tokenType);
+    }
+    Dictionary<String, Object> eventDictionary = new Hashtable<String, Object>();
+    eventDictionary.put(TrustedTokenService.EVENT_USER_ID, userId);
+
+    // send an async event to indicate that the user has been trusted, things that want to create users can hook into this.
+    eventAdmin.sendEvent(new Event(TrustedTokenService.TRUST_USER_TOPIC,eventDictionary));
+  }
+
 }
