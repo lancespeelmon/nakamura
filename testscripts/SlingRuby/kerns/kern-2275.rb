@@ -48,6 +48,7 @@ class TC_Kern2275 < Test::Unit::TestCase
     data[":name"] = userid
     data["pwd"] = "testuser"
     data["pwdConfirm"] = "testuser"
+    data["email"] = "#{userid}@sakai.invalid"
     response = @s.execute_post(@s.url_for( "/system/userManager/user.create.json"), data)
     response_json = JSON.parse response.body
     assert_equal(201, response_json["status.code"])
@@ -74,6 +75,7 @@ class TC_Kern2275 < Test::Unit::TestCase
     data[":name"] = userid
     data["pwd"] = "testuser"
     data["pwdConfirm"] = "testuser"
+    data["email"] = "#{userid}@sakai.invalid"
     response = @s.execute_post(@s.url_for( "/system/userManager/user.create.json"), data)
     response_json = JSON.parse response.body
     assert_equal(201, response_json["status.code"])
@@ -100,6 +102,7 @@ class TC_Kern2275 < Test::Unit::TestCase
     data[":name"] = userid
     data["pwd"] = "testuser"
     data["pwdConfirm"] = "testuser"
+    data["email"] = "#{userid}@sakai.invalid"
     response = @s.execute_post(@s.url_for( "/system/userManager/user.create.json"), data)
     response_json = JSON.parse response.body
     assert_equal(201, response_json["status.code"])
@@ -128,6 +131,7 @@ class TC_Kern2275 < Test::Unit::TestCase
     data[":name"] = userid
     data["pwd"] = "testuser"
     data["pwdConfirm"] = "testuser"
+    data["email"] = "#{userid}@sakai.invalid"
     response = @s.execute_post(@s.url_for( "/system/userManager/user.create.json"), data)
     response_json = JSON.parse response.body
     assert_equal(201, response_json["status.code"])
