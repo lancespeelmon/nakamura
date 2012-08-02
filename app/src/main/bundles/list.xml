@@ -751,5 +751,20 @@ KERN-1187
       <artifactId>org.sakaiproject.nakamura.robots.txt</artifactId>
       <version>1.5.0-SNAPSHOT</version>
     </bundle>
+    <bundle>
+      <groupId>org.sakaiproject.nakamura</groupId>
+      <artifactId>org.sakaiproject.nakamura.email-verify</artifactId>
+      <version>1.5.0-SNAPSHOT</version>
+    </bundle>
+    <bundle>
+      <groupId>org.sakaiproject.nakamura</groupId>
+      <artifactId>org.sakaiproject.nakamura.lost-pwd</artifactId>
+      <version>1.5.0-SNAPSHOT</version>
+    </bundle>
+    <bundle>
+      <groupId>org.sakaiproject.nakamura</groupId>
+      <artifactId>org.sakaiproject.nakamura.upgrades</artifactId>
+      <version>1.5.0-SNAPSHOT</version>
+    </bundle>
    </startLevel>
 </bundles>

@@ -247,6 +247,7 @@
    <field name="firstName" type="text_en_splitting" indexed="true" stored="true" />
    <field name="lastName" type="text_en_splitting" indexed="true" stored="true" />
    <field name="email" type="text_punct_phrase" indexed="true" stored="true" />
+   <field name="newemail" type="text_punct_phrase" indexed="true" stored="true" />
    <field name="type" type="string" indexed="true" stored="true" termVectors="true" />
    <field name="group" type="string" indexed="true" stored="true" multiValued="true" />
    <field name="profile" type="text_en_splitting" indexed="true" stored="false" multiValued="true" />
