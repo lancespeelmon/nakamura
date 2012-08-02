@@ -324,49 +324,60 @@ public class LiteCreateSakaiUserServlet extends LiteAbstractUserPostServlet {
       AuthorizableManager authorizableManager = selfRegSession.getAuthorizableManager();
       try {
         if (!userFinder.userExists(principalName)) {
-          if (authorizableManager.createUser(principalName, principalName,
-              digestPassword(pwd), null)) {
-            log.info("User {} created", principalName);
-            User user = (User) authorizableManager.findAuthorizable(principalName);
-
-            String userPath = LiteAuthorizableResourceProvider.SYSTEM_USER_MANAGER_USER_PREFIX
-                + user.getId();
-            Map<String, RequestProperty> reqProperties = collectContent(request,
-                response, userPath);
-            response.setPath(userPath);
-            response.setLocation(userPath);
-            response
-                .setParentLocation(LiteAuthorizableResourceProvider.SYSTEM_USER_MANAGER_USER_PATH);
-            changes.add(Modification.onCreated(userPath));
-
-            Map<String, Object> toSave = Maps.newLinkedHashMap();
-
-            // write content from form
-            writeContent(selfRegSession, user, reqProperties, changes, toSave);
-
-            saveAll(selfRegSession, toSave);
-            try {
-              postProcessorService.process(user, selfRegSession, ModificationType.CREATE, ParameterMap.extractParameters(request));
-            } catch (Exception e) {
-              log.warn(e.getMessage(), e);
-              response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                  e.getMessage());
-              return;
+          String email = request.getParameter("email");
+          
+          if (email != null && !userFinder.userWithEmailExists(email)) {
+            if (authorizableManager.createUser(principalName, principalName,
+                digestPassword(pwd), null)) {
+              log.info("User {} created", principalName);
+              User user = (User) authorizableManager.findAuthorizable(principalName);
+  
+              String userPath = LiteAuthorizableResourceProvider.SYSTEM_USER_MANAGER_USER_PREFIX
+                  + user.getId();
+              Map<String, RequestProperty> reqProperties = collectContent(request,
+                  response, userPath);
+              response.setPath(userPath);
+              response.setLocation(userPath);
+              response
+                  .setParentLocation(LiteAuthorizableResourceProvider.SYSTEM_USER_MANAGER_USER_PATH);
+              changes.add(Modification.onCreated(userPath));
+  
+              Map<String, Object> toSave = Maps.newLinkedHashMap();
+  
+              // write content from form
+              writeContent(selfRegSession, user, reqProperties, changes, toSave);
+  
+              saveAll(selfRegSession, toSave);
+              try {
+                postProcessorService.process(user, selfRegSession, ModificationType.CREATE, ParameterMap.extractParameters(request));
+              } catch (Exception e) {
+                log.warn(e.getMessage(), e);
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    e.getMessage());
+                return;
+              }
+              response.setStatus(HttpServletResponse.SC_CREATED, "user " + principalName + " created");
+              // Launch an OSGi event for creating a user.
+              try {
+                Dictionary<String, String> properties = new Hashtable<String, String>();
+                properties.put(UserConstants.EVENT_PROP_USERID, principalName);
+                EventUtils.sendOsgiEvent(properties, UserConstants.TOPIC_USER_CREATED,
+                    eventAdmin);
+              } catch (Exception e) {
+                // Trap all exception so we don't disrupt the normal behaviour.
+                log.error("Failed to launch an OSGi event for creating a user.", e);
+              }
+            } else {
+              response.setStatus(HttpServletResponse.SC_BAD_REQUEST,
+                  "Unable To create User " + principalName);
             }
-            response.setStatus(HttpServletResponse.SC_CREATED, "user " + principalName + " created");
-            // Launch an OSGi event for creating a user.
-            try {
-              Dictionary<String, String> properties = new Hashtable<String, String>();
-              properties.put(UserConstants.EVENT_PROP_USERID, principalName);
-              EventUtils.sendOsgiEvent(properties, UserConstants.TOPIC_USER_CREATED,
-                  eventAdmin);
-            } catch (Exception e) {
-              // Trap all exception so we don't disrupt the normal behaviour.
-              log.error("Failed to launch an OSGi event for creating a user.", e);
-            }
-          } else {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST,
-                "Unable To create User " + principalName);
+          }
+          else if (email == null) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST, "You must supply an email address.");
+          }
+          else {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST, "User with email "
+                + email + " already exists");
           }
         } else {
           response.setStatus(HttpServletResponse.SC_BAD_REQUEST, "User with name "

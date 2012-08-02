@@ -112,6 +112,11 @@ public interface UserConstants {
   public static final String USER_EMAIL_PROPERTY = "email";
   
   /**
+   * The property name that holds the temporary changed email of a user.
+   */
+  public static final String USER_NEW_EMAIL_PROPERTY = "newemail";
+  
+  /**
    * The property name that holds the picture location for a user.
    */
   public static final String USER_PICTURE = "picture";

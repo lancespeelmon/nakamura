@@ -162,6 +162,7 @@ public class LiteUserExistsServlet extends SlingSafeMethodsServlet {
       } else {
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
       }
+      session.logout();
     } catch (Exception e) {
       response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
       return;

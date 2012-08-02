@@ -210,10 +210,12 @@ public class LiteCreateSakaiUserServletTest  {
     when(request.getParameter(SlingPostConstants.RP_NODE_NAME)).thenReturn("foo");
     when(request.getParameter("pwd")).thenReturn("bar");
     when(request.getParameter("pwdConfirm")).thenReturn("bar");
+    when(request.getParameter("email")).thenReturn("somethingunique@bar.foo");
     Vector<String> paramNames= new Vector<String>();
     paramNames.add(SlingPostConstants.RP_NODE_NAME);
     paramNames.add("pwd");
     paramNames.add("pwdConfirm");
+    paramNames.add("email");
     when(request.getParameterNames()).thenReturn(paramNames.elements());
     
     RequestParameterMap requestParameterMap = Mockito.mock(RequestParameterMap.class);
@@ -221,6 +223,7 @@ public class LiteCreateSakaiUserServletTest  {
     when(request.getParameterValues(SlingPostConstants.RP_NODE_NAME)).thenReturn(new String[]{"foo"});
     when(request.getParameterValues("pwd")).thenReturn(new String[] {"bar"});
     when(request.getParameterValues("pwdConfirm")).thenReturn(new String[] {"bar"});
+    when(request.getParameterValues("email")).thenReturn(new String[] {"somethingunique@bar.foo"});
     when(userFinder.userExists("foo")).thenReturn(false);
 
     HtmlResponse response = new HtmlResponse();
