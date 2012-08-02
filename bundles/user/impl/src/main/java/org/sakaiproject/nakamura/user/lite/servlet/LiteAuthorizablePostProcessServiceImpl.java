@@ -59,5 +59,43 @@ public class LiteAuthorizablePostProcessServiceImpl implements LiteAuthorizableP
     defaultPostProcessor.process(authorizable, session, modification, parameters);
     }
 
+  protected Comparator<LiteAuthorizablePostProcessor> getComparator(final Map<LiteAuthorizablePostProcessor, Map<String, Object>> propertiesMap) {
+    return new Comparator<LiteAuthorizablePostProcessor>() {
+      public int compare(LiteAuthorizablePostProcessor o1, LiteAuthorizablePostProcessor o2) {
+        Map<String, Object> props1 = propertiesMap.get(o1);
+        Map<String, Object> props2 = propertiesMap.get(o2);
+
+        return ServiceUtil.getComparableForServiceRanking(props1).compareTo(props2);
+      }
+    };
+  }
+
+  protected void bindDefaultPostProcessor (LiteAuthorizablePostProcessor service, Map<String, Object> properties) {
+      for (LiteAuthorizablePostProcessor processor : orderedServices)
+      {
+          if (service.equals(processor))
+          {
+              LOGGER.debug("removing post processor {} from ordered list because it was added as the default", service);
+              removeService(service, properties);
+              break;
+          }
+      }
+
+      defaultPostProcessor = service;
+  }
+
+  protected void bindAuthorizablePostProcessor(LiteAuthorizablePostProcessor service, Map<String, Object> properties) {
+    LOGGER.debug("Adding service: {}", service);
+    addService(service, properties);
+  }
+
+  protected void unbindAuthorizablePostProcessor(LiteAuthorizablePostProcessor service, Map<String, Object> properties) {
+    LOGGER.debug("Removing service: {}", service);
+    removeService(service, properties);
+  }
+
+  protected void saveArray(List<LiteAuthorizablePostProcessor> serviceList) {
+    orderedServices = serviceList.toArray(new LiteAuthorizablePostProcessor[serviceList.size()]);
+  }
 
 }

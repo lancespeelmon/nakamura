@@ -65,5 +65,12 @@ public interface TrustedTokenService {
   void deregisterType(String type,
       TokenTrustValidator userContentAuthenticationHandler);
 
+  /**
+   * switch to the requested user... this will add a cookie that will trust the user as the "userId" passed in
+   * @param userId the user to swtich to
+   * @param request
+   * @param response
+   */
+  void switchToUser(String userId, HttpServletRequest request, HttpServletResponse response);
 
 }
