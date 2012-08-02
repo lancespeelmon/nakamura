@@ -35,6 +35,7 @@ class TC_Kern2211 < Test::Unit::TestCase
     data[":name"] = lower_case_user_name
     data["pwd"] = "testuser"
     data["pwdConfirm"] = "testuser"
+    data["email"] = "#{lower_case_user_name}@sakai.invalid"
 
     response = @s.execute_post(@s.url_for( "/system/userManager/user.create.json"), data)
     response_json = JSON.parse response.body
@@ -48,6 +49,7 @@ class TC_Kern2211 < Test::Unit::TestCase
     data[":name"] = upcase_user_name
     data["pwd"] = "testuser"
     data["pwdConfirm"] = "testuser"
+    data["email"] = "#{upcase_user_name}@sakai.invalid"
     response = @s.execute_post(@s.url_for( "/system/userManager/user.create.json"), data)
     response_json = JSON.parse response.body
     assert_equal(400, response_json["status.code"])
