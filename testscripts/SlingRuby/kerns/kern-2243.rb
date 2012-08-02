@@ -73,7 +73,8 @@ class TC_Kern2243 < Test::Unit::TestCase
     userdata = {
         ":name"=>username,
         "pwd"=>"s",
-        "pwdConfirm"=>"s"
+        "pwdConfirm"=>"s",
+        "email"=>"#{username}@sakai.invalid"
     }
 
     @s.execute_post(@s.url_for($USER_CREATE_URI), userdata.merge(@shared_props))

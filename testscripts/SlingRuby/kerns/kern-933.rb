@@ -22,6 +22,7 @@ class TC_Kern993Test < Test::Unit::TestCase
       "pwdConfirm" => password,
       "firstName" => firstname,
       "lastName" => lastname,
+      "email" => "#{userid}@sakai.invalid",
       "_charset_" => "UTF-8"
     })
     assert_equal("201", res.code, "Should have created user as admin")
