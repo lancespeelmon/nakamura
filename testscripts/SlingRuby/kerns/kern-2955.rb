@@ -6,7 +6,7 @@ Bundler.setup(:default)
 require 'nakamura/test'
 include SlingUsers
 
-class TC_Kern2621 < Test::Unit::TestCase
+class TC_Kern2955 < Test::Unit::TestCase
   include SlingTest
 
   def setup
@@ -57,11 +57,17 @@ class TC_Kern2621 < Test::Unit::TestCase
     res = @s.execute_get(@s.url_for("/var/search/usersgroups.tidy.json"), {
         "q" => "*",
         "page" => "0",
-        "items" => "10"
+        "items" => "1000"
     })
     assert_equal('200', res.code, "Find all with wildcard: #{res}\n#{res.body}")
     json = JSON.parse(res.body)
     assert(4 <= json["total"].to_i(), "Expected 4 or more results: #{res.body}")
+    foundusers = get_user_ids(json)
+    assert((foundusers.include? @id_lastName), "Results should include #{@id_lastName}: #{res.body}")
+    assert((foundusers.include? @id_email), "Results should include #{@id_email}: #{res.body}")
+    foundgroups = get_group_ids(json)
+    assert((foundgroups.include? @id_groupTitle), "Results should include #{@id_groupTitle}: #{res.body}")
+    assert((foundgroups.include? @id_groupDescription), "Results should include #{@id_groupDescription}: #{res.body}")
   end
 
   def do_autocomplete_query
@@ -76,9 +82,13 @@ class TC_Kern2621 < Test::Unit::TestCase
     expectedusers = [@id_lastName]
     foundusers = get_user_ids(json)
     assert_equal(expectedusers, foundusers, "Expected #{foundusers} to equal #{expectedusers}")
+    assert((foundusers.include? @id_lastName), "Results should include #{@id_lastName}: #{res.body}")
+    assert((!foundusers.include? @id_email), "Results should NOT include #{@id_email}: #{res.body}")
     expectedgroups = [@id_groupTitle]
     foundgroups = get_group_ids(json)
     assert_equal(expectedgroups, foundgroups, "Expected #{foundgroups} to equal #{expectedgroups}")
+    assert((foundgroups.include? @id_groupTitle), "Results should include #{@id_groupTitle}: #{res.body}")
+    assert((!foundgroups.include? @id_groupDescription), "Results should NOT include #{@id_groupDescription}: #{res.body}")
   end
 
 end
