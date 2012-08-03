@@ -80,6 +80,7 @@ public class PeopleGroupsAutocompleteQueryHandler extends DomainObjectSearchQuer
     if (qParam != null) {
       customQuery = String.format(Q_FORMAT, qParam);
     }
+    LOGGER.debug("customQuery = {}", customQuery);
     return customQuery;
   }
 
