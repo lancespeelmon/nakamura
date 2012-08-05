@@ -23,10 +23,6 @@ public class EmailVerificationExceptionServlet extends ExceptionServletBase {
   protected Logger getLogger() {
     return LOGGER;
   }
-  
-  protected String getBasePath() {
-    return "/emailverify/sling/servlet/errorhandler/";
-  }
 
   @Override
   protected ServletResolver getResolver() {
