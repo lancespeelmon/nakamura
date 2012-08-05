@@ -1,6 +1,0 @@
-{
-    "sakai:content-type": "text/plain",
-    "sling:resourceType": "sakai/template",
-    "sakai:template": "${sender},\n\nYour account has been disabled because you failed to verify your email address.",
-    "jcr:primaryType": "sling:Folder"
-}
