@@ -7,8 +7,10 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.search.QueryUtils;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
@@ -16,6 +18,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.search.SearchUtil;
 import org.sakaiproject.nakamura.api.search.solr.Query;
+import org.sakaiproject.nakamura.api.search.solr.SolrSearchUtil;
 import org.sakaiproject.nakamura.api.solr.SolrServerService;
 import org.sakaiproject.nakamura.api.user.UserFinder;
 import org.slf4j.Logger;
@@ -80,7 +83,8 @@ public class SolrUserFinderImpl implements UserFinder {
   protected Set<String> findUsersByField(String fieldName, String fieldValue) throws Exception {
     Set<String> userIds = new HashSet<String>();
     SolrServer solrServer = solrSearchService.getServer();
-    String queryString = "resourceType:authorizable AND type:u AND " + fieldName + ":" + fieldValue;
+    String queryString = "resourceType:authorizable AND type:u AND " + ClientUtils.escapeQueryChars(fieldName) +
+       ":" + ClientUtils.escapeQueryChars(fieldValue);
     SolrQuery solrQuery = new SolrQuery(queryString);
     QueryResponse queryResponse = solrServer.query(solrQuery);
     SolrDocumentList results = queryResponse.getResults();
