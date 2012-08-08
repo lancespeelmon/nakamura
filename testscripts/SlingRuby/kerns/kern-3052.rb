@@ -25,7 +25,8 @@ class TC_Kern3052 < Test::Unit::TestCase
         ":name" => userid,
         "pwd" => "testuser",
         "pwdConfirm" => "testuser",
-        "_charset_" => "utf-8"
+        "_charset_" => "utf-8",
+	"email" => "#{userid}@foo.com"
     })
     assert_equal("201", res.code)
     wait_for_indexer
@@ -56,9 +57,17 @@ class TC_Kern3052 < Test::Unit::TestCase
         "userid" => "Jean",
         "_charset_" => "utf-8"
     })
+#this is actually an error @{m} comes across as literally the characters "@{m}"
+#this test is being kept, however, as it identified a failure to escape Solr search chars in LiteUserExistsServlet!
     assert_equal("404", res.code)
     res = @s.execute_get(@s.url_for("system/userManager/user.exists.html"), {
         "userid" => "@{m}",
+        "_charset_" => "utf-8"
+    })
+#this test does what, I believe, the previous test was *intended* to do
+    assert_equal("404", res.code)
+    res = @s.execute_get(@s.url_for("system/userManager/user.exists.html"), {
+        "userid" => "#{m}",
         "_charset_" => "utf-8"
     })
     assert_equal("404", res.code)

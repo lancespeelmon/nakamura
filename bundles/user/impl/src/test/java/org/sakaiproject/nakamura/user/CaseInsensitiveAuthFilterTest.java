@@ -87,6 +87,7 @@ public class CaseInsensitiveAuthFilterTest {
 		verify(request, times(2)).getRequestURI();
 		verify(request).getParameter((FormLoginServlet.USERNAME));
 		verify(request).getParameterMap();
+    verify(request).getCharacterEncoding();
 		verify(chain).doFilter(any(OverriddenRequest.class), any(HttpServletResponse.class));
 		verifyNoMoreInteractions(request);
 	}
@@ -113,6 +114,7 @@ public class CaseInsensitiveAuthFilterTest {
 		verify(request, times(2)).getRequestURI();
 		verify(request).getParameter(":name");
 		verify(request).getParameterMap();
+    verify(request).getCharacterEncoding();
 		verify(chain).doFilter(any(OverriddenRequest.class), any(HttpServletResponse.class));
 		verifyNoMoreInteractions(request);
 	}
