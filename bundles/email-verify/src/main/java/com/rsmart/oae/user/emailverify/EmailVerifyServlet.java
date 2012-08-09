@@ -1,3 +1,20 @@
+/**
+ * Licensed to the Sakai Foundation (SF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The SF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package com.rsmart.oae.user.emailverify;
 
 import com.rsmart.oae.user.api.emailverify.EmailVerificationException;
@@ -7,8 +24,8 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.apache.sling.commons.json.JSONException;
 import org.sakaiproject.nakamura.api.doc.BindingType;
 import org.sakaiproject.nakamura.api.doc.ServiceBinding;
@@ -34,44 +51,18 @@ import java.util.Map;
 
 import javax.servlet.ServletException;
 
-
-
-@ServiceDocumentation(
-    bindings = {
-        @ServiceBinding(
-            type = BindingType.TYPE,
-            bindings = {"rsmart/emailVerify"},
-            selectors = { @ServiceSelector(name = "verify") }
-        )
-    },
-    methods = {
-        @ServiceMethod(
-            name = "GET",
-            description = {
-                "This servlet will handle email verification.",
-                "The guid passed in must match the one in the guid property of the rsmart/emailVerify node."
-            },
-            response = {
-                @ServiceResponse(code = 200, description = "User's email was verified.  The system will record that the user has been verified."),
-                @ServiceResponse(code = 500, description = "The passed in guid did not match the stored guid.")
-            }
-        ) 
-    },
-    name = "EmailVerifyServlet",
-    description = "Handles the link that is email to the user to verify their email address.",
-    shortDescription = "Handles the link that is email to the user to verify their email address.",
-    okForVersion = "0.11"
-)
+@ServiceDocumentation(bindings = { @ServiceBinding(type = BindingType.TYPE, bindings = { "rsmart/emailVerify" }, selectors = { @ServiceSelector(name = "verify") }) }, methods = { @ServiceMethod(name = "GET", description = {
+    "This servlet will handle email verification.",
+    "The guid passed in must match the one in the guid property of the rsmart/emailVerify node." }, response = {
+    @ServiceResponse(code = 200, description = "User's email was verified.  The system will record that the user has been verified."),
+    @ServiceResponse(code = 500, description = "The passed in guid did not match the stored guid.") }) }, name = "EmailVerifyServlet", description = "Handles the link that is email to the user to verify their email address.", shortDescription = "Handles the link that is email to the user to verify their email address.", okForVersion = "0.11")
 @SlingServlet(methods = { "GET", "POST" }, resourceTypes = { "rsmart/emailVerify" })
 public class EmailVerifyServlet extends SlingAllMethodsServlet {
 
-  /**
-   * 
-   */
   private static final long serialVersionUID = -2952378073503392788L;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EmailVerifyServlet.class);
-  
+
   @Reference
   protected transient EmailVerifyService emailVerifyService;
 
@@ -80,40 +71,42 @@ public class EmailVerifyServlet extends SlingAllMethodsServlet {
       throws ServletException, IOException {
     processRequest(request, response);
   }
-  
+
   @Override
   protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
       throws ServletException, IOException {
     processRequest(request, response);
   }
-  
-  protected void processRequest(SlingHttpServletRequest request, SlingHttpServletResponse response)
-      throws ServletException, IOException {
+
+  protected void processRequest(SlingHttpServletRequest request,
+      SlingHttpServletResponse response) throws ServletException, IOException {
 
     Resource resource = request.getResource();
     Content verification = resource.adaptTo(Content.class);
     String guid = request.getParameter(EmailVerifyService.EMAIL_VERIFY_GUID_PARAM);
-    
+
     String selector = request.getRequestPathInfo().getSelectorString();
     String ext = request.getRequestPathInfo().getExtension();
-    
+
     Session session = StorageClientUtils.adaptToSession(request.getResourceResolver()
         .adaptTo(javax.jcr.Session.class));
 
     if (guid != null && selector.equals("verify")) {
-      emailVerifyService.clearVerification(session, guid, verification);  // let the exception throw... we'll handle it
+      emailVerifyService.clearVerification(session, guid, verification); // let the
+                                                                         // exception
+                                                                         // throw... we'll
+                                                                         // handle it
       response.sendRedirect("/me#!emailVerified");
-    }
-    else if (selector.equals("resend")) {
+    } else if (selector.equals("resend")) {
       try {
         AuthorizableManager authorizableManager = session.getAuthorizableManager();
         User user = (User) authorizableManager.findAuthorizable(session.getUserId());
-        
+
         emailVerifyService.sendVerifyEmail(session, user,
             ParameterMap.extractParameters(request));
-        
+
         response.setStatus(200);
-        
+
         sendBlankResponse(response, ext);
       } catch (StorageClientException e) {
         LOGGER.warn("failed to resend email verification", e);
@@ -125,8 +118,7 @@ public class EmailVerifyServlet extends SlingAllMethodsServlet {
         LOGGER.warn("failed to resend email verification", e);
         response.setStatus(500);
       }
-    }
-    else if (selector.equals("seenWarning")) {
+    } else if (selector.equals("seenWarning")) {
       emailVerifyService.seenWarning(session, verification);
       response.setStatus(200);
       try {
@@ -135,15 +127,14 @@ public class EmailVerifyServlet extends SlingAllMethodsServlet {
         LOGGER.warn("failed to resend email verification", e);
         response.setStatus(500);
       }
-    }
-    else if (selector.equals("cancelEmailChange")) {
+    } else if (selector.equals("cancelEmailChange")) {
       AuthorizableManager authorizableManager;
       try {
         authorizableManager = session.getAuthorizableManager();
         User user = (User) authorizableManager.findAuthorizable(session.getUserId());
 
         emailVerifyService.cancelChangeEmail(request, session, user, verification);
-        
+
         response.setStatus(200);
 
         sendBlankResponse(response, ext);
@@ -157,8 +148,7 @@ public class EmailVerifyServlet extends SlingAllMethodsServlet {
         LOGGER.warn("failed to change email", e);
         response.setStatus(500);
       }
-    }
-    else if (selector.equals("emailChange")) {
+    } else if (selector.equals("emailChange")) {
       AuthorizableManager authorizableManager;
       try {
         authorizableManager = session.getAuthorizableManager();
@@ -166,7 +156,7 @@ public class EmailVerifyServlet extends SlingAllMethodsServlet {
 
         emailVerifyService.changeEmail(session, user, verification,
             ParameterMap.extractParameters(request));
-        
+
         response.setStatus(200);
 
         sendBlankResponse(response, ext);
@@ -180,8 +170,7 @@ public class EmailVerifyServlet extends SlingAllMethodsServlet {
         LOGGER.warn("failed to change email", e);
         response.setStatus(500);
       }
-    }
-    else {
+    } else {
       throw new EmailVerificationException(); // invalid selector
     }
   }
@@ -196,7 +185,5 @@ public class EmailVerifyServlet extends SlingAllMethodsServlet {
       writer.valueMap(valueMap);
     }
   }
-  
-  
 
 }

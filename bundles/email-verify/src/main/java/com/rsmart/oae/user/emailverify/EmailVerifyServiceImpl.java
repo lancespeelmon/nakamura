@@ -1,5 +1,21 @@
+/**
+ * Licensed to the Sakai Foundation (SF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The SF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package com.rsmart.oae.user.emailverify;
-
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -71,9 +87,10 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 
 @Service
-@Component(immediate = true, metatype=true)
+@Component(immediate = true, metatype = true)
 @Reference(name = "MessageTransport", referenceInterface = LiteMessageTransport.class, cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE, policy = ReferencePolicy.DYNAMIC, bind = "addTransport", unbind = "removeTransport")
-public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVerifyService, LiteAuthorizablePostProcessor {
+public class EmailVerifyServiceImpl extends EmailServiceBase implements
+    EmailVerifyService, LiteAuthorizablePostProcessor {
 
   protected static final int HTTPS_PORT_443 = 443;
 
@@ -88,7 +105,7 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
   protected static final String EMAIL_VERIFY_RESOURCE_PATH = "/emailVerify";
 
   protected static final String EMAIL_VERIFY_UUID_PROPERTY = "rsmart:emailVerifyUUID";
-  
+
   protected static final String EMAIL_VERIFY_CHANGED_EMAIL_PROPERTY = "rsmart:changedEmail";
 
   protected static final String SLING_RESOURCE_TYPE = "sling:resourceType";
@@ -112,8 +129,7 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
   @Property(value = "23")
   public static final String HOURS_TIL_WARNING_EMAIL = "emailverify.hours_to_warning_email";
 
-  private static final Logger
-    LOG = LoggerFactory.getLogger(EmailVerifyServiceImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(EmailVerifyServiceImpl.class);
 
   protected static final String EMAIL_VERIFY_PATH = "emailverify.verifyPath";
 
@@ -126,11 +142,11 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
   private long millisToVerify;
 
   private long millisBetweenWarnings;
-  
+
   private long millisBeforeFirstWarning;
 
   private long millisToWarningEmail;
-  
+
   @Reference
   protected transient Scheduler scheduler;
 
@@ -142,7 +158,7 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
 
   @Reference
   protected transient UserFinder userFinder;
-  
+
   @Reference
   protected transient UpgradesManager upgradesManager;
 
@@ -155,13 +171,11 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
   /**
    * This will contain all the transports.
    */
-  protected Map<LiteMessageTransport, LiteMessageTransport> transports =
-      new ConcurrentHashMap<LiteMessageTransport, LiteMessageTransport>();
-
+  protected Map<LiteMessageTransport, LiteMessageTransport> transports = new ConcurrentHashMap<LiteMessageTransport, LiteMessageTransport>();
 
   /**
    * {@inheritDoc}
-   *
+   * 
    * @see com.rsmart.oae.user.api.emailverify.EmailVerifyService#sendVerifyEmail(org.sakaiproject.nakamura.api.lite.Session,
    *      org.sakaiproject.nakamura.api.lite.authorizable.User, java.util.Map)
    * @throws EmailVerificationException
@@ -171,17 +185,17 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
     LOG.debug(
         "sendVerifyEmail(final Session session, final User {}, final Map<String, Object[]> parameters)",
         user);
-	if (disableVerification){
-	  LOG.debug("Email verification disabled. Not sending verify email to {}", user);
-	  return;
-	}
+    if (disableVerification) {
+      LOG.debug("Email verification disabled. Not sending verify email to {}", user);
+      return;
+    }
 
     String email = (String) user.getProperty(UserConstants.USER_EMAIL_PROPERTY);
 
-    LOG.debug("verifying email: {0} for user {1}", new Object[] {email, user.getId()});
+    LOG.debug("verifying email: {0} for user {1}", new Object[] { email, user.getId() });
 
     Session adminSession = null;
-    
+
     try {
       adminSession = repository.loginAdministrative();
       String authId = user.getId();
@@ -194,11 +208,11 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
         verify = createVerifyFile(session, user, email, authId, path, contentManager,
             true, parameters);
         setupAcl(false, user, adminSession.getAccessControlManager());
-        user.setProperty("emailverifyseewarning", "" + (new Date().getTime() + millisBeforeFirstWarning));
+        user.setProperty("emailverifyseewarning", ""
+            + (new Date().getTime() + millisBeforeFirstWarning));
         AuthorizableManager authorizableManager = session.getAuthorizableManager();
         authorizableManager.updateAuthorizable(user);
-      }
-      else {
+      } else {
         verify = getVerifyNode(contentManager, path);
 
         String expectedUser = verify.getProperty(EMAIL_VERIFY_USER).toString();
@@ -210,11 +224,11 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
         String storedEmail = verify.getProperty(EMAIL_VERIFY_EMAIL).toString();
 
         if (!storedEmail.equalsIgnoreCase(email)) {
-          // FIXME Dodgy - Dead store to local variable 
+          // FIXME Dodgy - Dead store to local variable
           email = storedEmail; // must be a change, right?
         }
       }
-      
+
       String emailTemplate = "verify_email";
 
       sendVerificationEmail(session, user, verify, emailTemplate, parameters);
@@ -230,11 +244,10 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
       throw new EmailVerificationException(e);
     } catch (IOException e) {
       throw new EmailVerificationException(e);
-    }
-    finally {
+    } finally {
       try {
         adminSession.logout();
-      } catch ( Exception e) {
+      } catch (Exception e) {
         LOG.warn("Failed to logout of administrative session {} ", e);
       }
     }
@@ -261,8 +274,8 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
 
     String uuid = (String) verify.getProperties().get(EMAIL_VERIFY_UUID_PROPERTY);
 
-    URL url = new URL(new URL(baseUrl), verifyPath + ".verify.html?" +
-        EmailVerifyService.EMAIL_VERIFY_GUID_PARAM + "=" + uuid);
+    URL url = new URL(new URL(baseUrl), verifyPath + ".verify.html?"
+        + EmailVerifyService.EMAIL_VERIFY_GUID_PARAM + "=" + uuid);
     return url;
   }
 
@@ -280,7 +293,8 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
         throw new EmailVerificationException();
       }
 
-      user.setProperty("emailverifyseewarning", "" + (new Date().getTime() + millisBetweenWarnings));
+      user.setProperty("emailverifyseewarning", ""
+          + (new Date().getTime() + millisBetweenWarnings));
       user.removeProperty("emailverifyerror");
 
       authorizableManager.updateAuthorizable(user);
@@ -322,28 +336,27 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
     Job warnEmail = new Job() {
 
       public void execute(JobContext jc) {
-          Map<String, Serializable> config = jc.getConfiguration();
-          javax.jcr.Session adminSession = null;
+        Map<String, Serializable> config = jc.getConfiguration();
+        javax.jcr.Session adminSession = null;
+        try {
+          adminSession = slingRepository.loginAdministrative(null);
+          Session sparseSession = StorageClientUtils.adaptToSession(adminSession);
+
+          String localVerifyPath = (String) config.get(EMAIL_VERIFY_PATH);
+          Locale userLocale = (Locale) config.get(USER_LOCALE);
+          URL verifyLink = (URL) config.get(VERIFY_LINK);
+
+          sendWarningEmail(adminSession, sparseSession, userLocale, localVerifyPath,
+              verifyLink);
+        } catch (Exception e) {
+          LOG.error("Unable to send email warning to user", e);
+        } finally {
           try {
-            adminSession = slingRepository.loginAdministrative(null);
-            Session sparseSession = StorageClientUtils
-              .adaptToSession(adminSession);
-
-            String localVerifyPath = (String)config.get(EMAIL_VERIFY_PATH);
-            Locale userLocale = (Locale)config.get(USER_LOCALE);
-            URL verifyLink = (URL)config.get(VERIFY_LINK);
-
-            sendWarningEmail(adminSession, sparseSession, userLocale, localVerifyPath, verifyLink);
-          } catch (Exception e) {
-            LOG.error("Unable to send email warning to user", e);
+            adminSession.logout();
+          } catch (Error e) {
+            LOG.warn("Failed to logout of administrative session {} ", e);
+            throw e;
           }
-          finally {
-            try {
-              adminSession.logout();
-            } catch ( Error e) {
-              LOG.warn("Failed to logout of administrative session {} ", e);
-              throw e;
-            }
         }
       }
 
@@ -357,20 +370,18 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
         try {
           adminSession = slingRepository.loginAdministrative(null);
           org.sakaiproject.nakamura.api.lite.Session sparseSession = StorageClientUtils
-            .adaptToSession(adminSession);
+              .adaptToSession(adminSession);
 
-
-          String localVerifyPath = (String)config.get(EMAIL_VERIFY_PATH);
-          Locale userLocale = (Locale)config.get(USER_LOCALE);
+          String localVerifyPath = (String) config.get(EMAIL_VERIFY_PATH);
+          Locale userLocale = (Locale) config.get(USER_LOCALE);
 
           disableUser(adminSession, sparseSession, userLocale, localVerifyPath);
         } catch (Exception e) {
           LOG.error("Unable to send email or close user", e);
-        }
-        finally {
+        } finally {
           try {
             adminSession.logout();
-          } catch ( Exception e) {
+          } catch (Exception e) {
             LOG.warn("Failed to logout of administrative session {} ", e);
           }
         }
@@ -387,10 +398,12 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
 
     try {
       if (warnEmailBy != null) {
-        scheduler.fireJobAt(null, warnEmail, new HashMap<String, Serializable>(jobConfig), warnEmailBy);
+        scheduler.fireJobAt(null, warnEmail,
+            new HashMap<String, Serializable>(jobConfig), warnEmailBy);
       }
 
-      scheduler.fireJobAt(null, killUser, new HashMap<String, Serializable>(jobConfig), verifyBy);
+      scheduler.fireJobAt(null, killUser, new HashMap<String, Serializable>(jobConfig),
+          verifyBy);
     } catch (Exception e) {
       throw new EmailVerificationException(e);
     }
@@ -416,15 +429,17 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
     templateParams.put("link", externalLink.toExternalForm());
 
     AuthorizableManager authorizableManager = session.getAuthorizableManager();
-    User user = (User) authorizableManager.findAuthorizable((String) verify.getProperty(EMAIL_VERIFY_USER));
+    User user = (User) authorizableManager.findAuthorizable((String) verify
+        .getProperty(EMAIL_VERIFY_USER));
 
-    sendEmail(session, user, null, "/var/templates/email/warn_verify_email", templateParams,
+    sendEmail(session, user, null, "/var/templates/email/warn_verify_email",
+        templateParams,
         getLocaleString(userLocale, adminSession, "EMAIL_WARNING_SUBJECT"));
   }
 
-  private void disableUser(javax.jcr.Session adminSession, Session session, Locale userLocale, String verifyPath)
-      throws StorageClientException, AccessDeniedException,
-      RepositoryException, IOException {
+  private void disableUser(javax.jcr.Session adminSession, Session session,
+      Locale userLocale, String verifyPath) throws StorageClientException,
+      AccessDeniedException, RepositoryException, IOException {
     ContentManager contentManager = session.getContentManager();
 
     if (!verifyExists(contentManager, verifyPath)) {
@@ -440,9 +455,11 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
     Map<String, String> templateParams = new HashMap<String, String>();
 
     AuthorizableManager authorizableManager = session.getAuthorizableManager();
-    User user = (User) authorizableManager.findAuthorizable((String) verify.getProperty(EMAIL_VERIFY_USER));
+    User user = (User) authorizableManager.findAuthorizable((String) verify
+        .getProperty(EMAIL_VERIFY_USER));
 
-    sendEmail(session, user, null, "/var/templates/email/disabled_verify_email", templateParams,
+    sendEmail(session, user, null, "/var/templates/email/disabled_verify_email",
+        templateParams,
         getLocaleString(userLocale, adminSession, "EMAIL_DISABLED_SUBJECT"));
 
     authorizableManager.disablePassword(user);
@@ -462,7 +479,7 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
     LOG.debug("clearVerification(Session session, String {}, Content {})", guid,
         verification);
 
-    if (disableVerification){
+    if (disableVerification) {
       LOG.debug("Email verification disabled. Not clearing {}", guid);
       return;
     }
@@ -476,7 +493,8 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
     if (verification == null) {
       throw new IllegalArgumentException("Content verification == null");
     }
-    // confirm that the guid matches that in the verification and that the current user is the verification user
+    // confirm that the guid matches that in the verification and that the current user is
+    // the verification user
     final String currentUserId = session.getUserId();
 
     final String expectedUserId = verification.getProperty(EMAIL_VERIFY_USER).toString();
@@ -492,7 +510,7 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
     if (verification.getProperty(EMAIL_VERIFY_UUID_PROPERTY) == null) {
       throw new InvalidLinkEmailVerificationException();
     }
-    
+
     final String expectedGuid = verification.getProperty(EMAIL_VERIFY_UUID_PROPERTY)
         .toString();
 
@@ -510,24 +528,24 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
         throw new InvalidLinkEmailVerificationException();
       }
 
-      if (Boolean.TRUE.equals(verification.getProperty(EMAIL_VERIFY_CHANGED_EMAIL_PROPERTY))) {
+      if (Boolean.TRUE.equals(verification
+          .getProperty(EMAIL_VERIFY_CHANGED_EMAIL_PROPERTY))) {
         // we have a changed email
         verification.removeProperty(EMAIL_VERIFY_CHANGED_EMAIL_PROPERTY);
         String newEmail = verification.getProperty(EMAIL_VERIFY_EMAIL).toString();
 
         Session adminSession = null;
-        
+
         try {
           // login as admin
           adminSession = repository.loginAdministrative(UserConstants.ADMIN_USERID);
-          
+
           authorizableManager = adminSession.getAuthorizableManager();
           user = (User) authorizableManager.findAuthorizable(currentUserId);
           user.removeProperty("newemail");
           user.setProperty(EMAIL, newEmail);
           authorizableManager.updateAuthorizable(user);
-        }
-        catch (Exception exp) {
+        } catch (Exception exp) {
           LOG.error("failed to update email", exp);
         } finally {
           // Destroy the admin session.
@@ -536,7 +554,7 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
           user = (User) authorizableManager.findAuthorizable(currentUserId);
         }
       }
-      
+
       user.removeProperty("emailverifyby");
       user.setProperty(EMAILVERIFIED, true);
 
@@ -545,7 +563,7 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
       ContentManager contentManager = session.getContentManager();
 
       verification.removeProperty(EMAIL_VERIFY_UUID_PROPERTY);
-      
+
       contentManager.update(verification);
     } catch (AccessDeniedException e) {
       throw new EmailVerificationException(e);
@@ -571,25 +589,24 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
   }
 
   protected boolean verifyExists(ContentManager contentManager, String path) {
-	if (disableVerification){
-		LOG.debug("Email verification disabled. Not verifying content at {}", path);
-		return true;
-	}
-	return contentManager.exists(path);
+    if (disableVerification) {
+      LOG.debug("Email verification disabled. Not verifying content at {}", path);
+      return true;
+    }
+    return contentManager.exists(path);
   }
 
-  protected Content getVerifyNode(ContentManager contentManager, String path) throws AccessDeniedException, StorageClientException {
+  protected Content getVerifyNode(ContentManager contentManager, String path)
+      throws AccessDeniedException, StorageClientException {
     return contentManager.get(path);
   }
 
-  protected Content createVerifyNode(ContentManager contentManager, 
-      String path, String authId, String email)
-      throws StorageClientException, AccessDeniedException {
+  protected Content createVerifyNode(ContentManager contentManager, String path,
+      String authId, String email) throws StorageClientException, AccessDeniedException {
 
     if (contentManager.exists(path)) {
       throw new StorageClientException("users verify already exists");
-    }
-    else {
+    } else {
       String resourceType = EmailVerifyService.EMAIL_VERIFY_RT;
       Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
@@ -609,8 +626,9 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
       return contentManager.get(path);
     }
   }
-  
-  protected Content createVerifyNode(ContentManager contentManager, User user) throws StorageClientException, AccessDeniedException {
+
+  protected Content createVerifyNode(ContentManager contentManager, User user)
+      throws StorageClientException, AccessDeniedException {
     String email = (String) user.getProperty(UserConstants.USER_EMAIL_PROPERTY);
     String path = getPath(user.getId());
     return createVerifyNode(contentManager, path, user.getId(), email);
@@ -619,54 +637,58 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
   protected void activate(ComponentContext componentContext) {
     Dictionary<String, Object> props = componentContext.getProperties();
 
-    millisToVerify = OsgiUtil.toLong (props.get(HOURS_TO_VERIFY), 24) * 60 * 60 * 1000;
-    millisBetweenWarnings =  OsgiUtil.toLong (props.get(MINUTES_BETWEEN_WARNINGS), 60) * 60 * 1000;
-    millisBeforeFirstWarning = OsgiUtil.toLong(props.get(MINUTES_BEFORE_FIRST_WARNING), 10) * 60 * 1000;
-    millisToWarningEmail = OsgiUtil.toLong (props.get(HOURS_TIL_WARNING_EMAIL), 23) * 60 * 60 * 1000;
+    millisToVerify = OsgiUtil.toLong(props.get(HOURS_TO_VERIFY), 24) * 60 * 60 * 1000;
+    millisBetweenWarnings = OsgiUtil.toLong(props.get(MINUTES_BETWEEN_WARNINGS), 60) * 60 * 1000;
+    millisBeforeFirstWarning = OsgiUtil.toLong(props.get(MINUTES_BEFORE_FIRST_WARNING),
+        10) * 60 * 1000;
+    millisToWarningEmail = OsgiUtil.toLong(props.get(HOURS_TIL_WARNING_EMAIL), 23) * 60 * 60 * 1000;
     disableVerification = OsgiUtil.toBoolean(props.get(DISABLE_VERIFICATION), false);
-    
-    upgradesManager.runUpgradeCode("emailverify", "verify existing users", new UpgradeUnit() {
-      public void runUpgrade(Session sparseSession) throws Exception {
-        runVerifyExistingUsers(sparseSession);
-      }
-    });
+
+    upgradesManager.runUpgradeCode("emailverify", "verify existing users",
+        new UpgradeUnit() {
+          public void runUpgrade(Session sparseSession) throws Exception {
+            runVerifyExistingUsers(sparseSession);
+          }
+        });
   }
 
   protected void runVerifyExistingUsers(Session sparseSession) throws Exception {
     ContentManager contentManager = sparseSession.getContentManager();
     AuthorizableManager authManager = sparseSession.getAuthorizableManager();
     AccessControlManager accessControlManager = sparseSession.getAccessControlManager();
-    
+
     Set<String> allUsers = userFinder.allUsers();
-    
+
     for (String uid : allUsers) {
       verifyExistingUser(uid, contentManager, authManager, accessControlManager);
     }
-    
-    verifyExistingUser(UserConstants.ADMIN_USERID, contentManager, authManager, accessControlManager);
-  }
-  
 
-  private void verifyExistingUser(String authId, ContentManager contentManager, AuthorizableManager authManager, 
-        AccessControlManager accessControlManager) throws AccessDeniedException, StorageClientException {
+    verifyExistingUser(UserConstants.ADMIN_USERID, contentManager, authManager,
+        accessControlManager);
+  }
+
+  private void verifyExistingUser(String authId, ContentManager contentManager,
+      AuthorizableManager authManager, AccessControlManager accessControlManager)
+      throws AccessDeniedException, StorageClientException {
     User user = (User) authManager.findAuthorizable(authId);
-    
+
     Content verify = getVerifyNode(contentManager, getPath(authId));
-    
+
     if (verify != null) {
       return; // this user is already processed or something...
     }
 
-    setupAcl(false, user, accessControlManager); // no user can change their email address w/o verifying
-    
+    setupAcl(false, user, accessControlManager); // no user can change their email address
+                                                 // w/o verifying
+
     // create verify file
     verify = createVerifyNode(contentManager, user);
     verify.removeProperty(EMAIL_VERIFY_UUID_PROPERTY);
     contentManager.update(verify);
-    
+
     // set user properties emailverified
     user.setProperty(EMAILVERIFIED, true);
-    
+
     authManager.updateAuthorizable(user);
   }
 
@@ -686,24 +708,25 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
     }
   }
 
-  protected void setupAcl(boolean verified, User user, AccessControlManager accessControlManager)
-      throws StorageClientException, AccessDeniedException {
+  protected void setupAcl(boolean verified, User user,
+      AccessControlManager accessControlManager) throws StorageClientException,
+      AccessDeniedException {
 
     List<AclModification> modifications = new ArrayList<AclModification>();
 
-    AclModification.addAcl(verified, Permissions.CAN_WRITE_PROPERTY, AclModification.getPropertyKey(user.getId(), EMAIL),
-        modifications);
+    AclModification.addAcl(verified, Permissions.CAN_WRITE_PROPERTY,
+        AclModification.getPropertyKey(user.getId(), EMAIL), modifications);
 
     accessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, user.getId(),
         modifications.toArray(new AclModification[modifications.size()]));
-    
+
     modifications.clear();
 
-    AclModification.addAcl(true, Permissions.CAN_WRITE_PROPERTY, AclModification.getPropertyKey(user.getId(), EMAIL),
-        modifications);
+    AclModification.addAcl(true, Permissions.CAN_WRITE_PROPERTY,
+        AclModification.getPropertyKey(user.getId(), EMAIL), modifications);
 
     accessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, UserConstants.ADMIN_USERID,
-        modifications.toArray(new AclModification[modifications.size()]));    
+        modifications.toArray(new AclModification[modifications.size()]));
   }
 
   public void changeEmail(Session session, User user, Content verification,
@@ -711,18 +734,18 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
     if (!hasVerified(verification)) {
       throw new EmailVerificationException("user has not verified yet");
     }
-    
+
     verification.setProperty(EMAIL_VERIFY_CHANGED_EMAIL_PROPERTY, new Boolean(true));
     verification.setProperty(EMAIL_VERIFY_EMAIL,
         getFirstValueFromArray(EMAIL, parameters));
     verification.setProperty(EMAIL_VERIFY_UUID_PROPERTY, createUUID());
 
     user.setProperty("newemail", verification.getProperty(EMAIL_VERIFY_EMAIL));
-    user.removeProperty(EMAILVERIFIED);  // they are no longer verified
-    
+    user.removeProperty(EMAILVERIFIED); // they are no longer verified
+
     try {
       AuthorizableManager authorizableManager = session.getAuthorizableManager();
-      
+
       ContentManager contentManager = session.getContentManager();
       contentManager.update(verification);
 
@@ -761,17 +784,17 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
     if (!verification.getProperty(EMAIL_VERIFY_CHANGED_EMAIL_PROPERTY).equals(true)) {
       throw new EmailVerificationException("email change is not in progress");
     }
-    
+
     verification.removeProperty(EMAIL_VERIFY_CHANGED_EMAIL_PROPERTY);
     verification.removeProperty(EMAIL_VERIFY_EMAIL);
     verification.removeProperty(EMAIL_VERIFY_UUID_PROPERTY);
 
     user.removeProperty("newemail");
-    user.setProperty(EMAILVERIFIED, true);  // they are back to verified
-    
+    user.setProperty(EMAILVERIFIED, true); // they are back to verified
+
     try {
       AuthorizableManager authorizableManager = session.getAuthorizableManager();
-      
+
       ContentManager contentManager = session.getContentManager();
       contentManager.update(verification);
 
@@ -781,19 +804,19 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
     } catch (StorageClientException e) {
       throw new EmailVerificationException(e);
     }
-    
+
   }
 
   public boolean hasVerified(Session session, User user) {
-	if (disableVerification){
-	  LOG.debug("Email verification disabled. Not verifying {}", user);
-	  return true;
-	}
+    if (disableVerification) {
+      LOG.debug("Email verification disabled. Not verifying {}", user);
+      return true;
+    }
 
     try {
       ContentManager contentManager = session.getContentManager();
       Content verification = getVerifyNode(contentManager, getPath(user.getId()));
-      
+
       return hasVerified(verification);
     } catch (StorageClientException e) {
       throw new EmailVerificationException(e);
@@ -811,7 +834,7 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
   protected LiteMessagingService getLiteMessagingService() {
     return messagingService;
   }
-  
+
   /**
    * @param transport
    */
@@ -823,7 +846,7 @@ public class EmailVerifyServiceImpl extends EmailServiceBase implements EmailVer
    * @param transport
    */
   public void addTransport(LiteMessageTransport transport) {
-    transports.put(transport,transport);
+    transports.put(transport, transport);
   }
 
   @Override

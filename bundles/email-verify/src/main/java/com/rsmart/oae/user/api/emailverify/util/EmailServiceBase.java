@@ -1,3 +1,20 @@
+/**
+ * Licensed to the Sakai Foundation (SF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The SF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package com.rsmart.oae.user.api.emailverify.util;
 
 import org.apache.felix.scr.annotations.Service;
@@ -12,6 +29,7 @@ import org.sakaiproject.nakamura.api.message.LiteMessagingService;
 import org.sakaiproject.nakamura.api.message.MessageConstants;
 import org.sakaiproject.nakamura.api.message.MessageRoutes;
 import org.sakaiproject.nakamura.api.user.UserConstants;
+import org.sakaiproject.nakamura.util.parameters.ParameterMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,16 +47,16 @@ import javax.jcr.RepositoryException;
 
 @Service
 public abstract class EmailServiceBase {
-  
+
   private static final String PARAM_LANGUAGE = "l";
 
-  private static final Logger
-    baseLogger = LoggerFactory.getLogger(EmailServiceBase.class);
+  private static final Logger baseLogger = LoggerFactory
+      .getLogger(EmailServiceBase.class);
 
   public void sendEmail(Session session, User user, String email, String template,
       Map<String, String> templateParams, String localizedSubject)
       throws PathNotFoundException, RepositoryException, IOException {
-    
+
     if (email == null) {
       email = (String) user.getProperty(UserConstants.USER_EMAIL_PROPERTY);
     }
@@ -61,7 +79,7 @@ public abstract class EmailServiceBase {
 
     boolean first = true;
 
-    for(final Entry<String, String> entry : templateParams.entrySet()) {
+    for (final Entry<String, String> entry : templateParams.entrySet()) {
       if (!first) {
         sb.append("|");
       }
@@ -75,7 +93,6 @@ public abstract class EmailServiceBase {
     mapProperties.put(MessageConstants.PROP_TEMPLATE_PARAMS, sb.toString());
 
     Content message = getLiteMessagingService().create(session, mapProperties);
-
 
     MessageRoutes routes = getLiteMessageRouterManager().getMessageRouting(message);
 
@@ -101,19 +118,19 @@ public abstract class EmailServiceBase {
     }
     return locale;
   }
-  
+
   protected abstract String getBundleName();
-  
-  protected String getLocaleString(Locale locale, javax.jcr.Session session, String subjectKey)
-      throws PathNotFoundException, RepositoryException, IOException {
+
+  protected String getLocaleString(Locale locale, javax.jcr.Session session,
+      String subjectKey) throws PathNotFoundException, RepositoryException, IOException {
     Node bundlesNode = session.getNode(getBundleName());
-  
+
     // load the language bundle
     Properties bndLang = getLangBundle(bundlesNode, locale.toString(), false);
-  
+
     // load the default bundle
     Properties bndLangDefault = getLangBundle(bundlesNode, "default", true);
-  
+
     if (bndLang != null && bndLang.containsKey(subjectKey)) {
       return bndLang.getProperty(subjectKey);
     } else if (bndLangDefault.containsKey(subjectKey)) {
@@ -124,21 +141,21 @@ public abstract class EmailServiceBase {
       return subjectKey;
     }
   }
-  
+
   public Locale getLocale(final Map<String, Object[]> params) {
     Locale l = null;
     final String lang = (String) getFirstValueFromArray(PARAM_LANGUAGE, params);
-  
+
     if (lang != null) {
       String[] parts = lang.split("_");
       l = new Locale(parts[0], parts[1]);
     } else {
       l = (Locale) getFirstValueFromArray("SlingHttpServletRequest.locale", params);
     }
-  
+
     return l;
   }
-  
+
   private Properties getLangBundle(Node bundlesNode, String name, boolean throwNotFound)
       throws IOException, PathNotFoundException, RepositoryException {
     Node langNode;
@@ -147,19 +164,17 @@ public abstract class EmailServiceBase {
     } catch (PathNotFoundException e) {
       if (throwNotFound) {
         throw e;
-      }
-      else {
+      } else {
         return null;
       }
     } catch (RepositoryException e) {
       if (throwNotFound) {
         throw e;
-      }
-      else {
+      } else {
         return null;
       }
     }
-  
+
     Node content = langNode.getNode("jcr:content");
     Properties props = new Properties();
     InputStream in = content.getProperty("jcr:data").getBinary().getStream();
@@ -169,25 +184,22 @@ public abstract class EmailServiceBase {
   }
 
   protected String getBaseUrl(SlingHttpServletRequest request) {
-    if ( ( request.getServerPort() == 80 ) ||
-         ( request.getServerPort() == 443 ) )
-      return request.getScheme() + "://" +
-             request.getServerName() +
-             request.getContextPath();
+    if ((request.getServerPort() == 80) || (request.getServerPort() == 443))
+      return request.getScheme() + "://" + request.getServerName()
+          + request.getContextPath();
     else
-      return request.getScheme() + "://" +
-             request.getServerName() + ":" + request.getServerPort() +
-             request.getContextPath();
+      return request.getScheme() + "://" + request.getServerName() + ":"
+          + request.getServerPort() + request.getContextPath();
   }
-  
+
   protected Logger getLogger() {
     return baseLogger;
   }
 
   protected abstract LiteMessageRouterManager getLiteMessageRouterManager();
-  
+
   protected abstract LiteMessagingService getLiteMessagingService();
-  
+
   protected abstract Map<LiteMessageTransport, LiteMessageTransport> getTransports();
 
   /**
