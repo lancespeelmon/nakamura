@@ -41,12 +41,7 @@
               <Export-Package>com.rsmart.oae.user.api.lostpwd.*</Export-Package>
               <Private-Package>com.rsmart.oae.user.lostpwd.*</Private-Package>
               <Embed-Transitive>true</Embed-Transitive>
-				<Sling-Initial-Content>
-				SLING-INF/content/var;path:=/var;overwriteProperties:=true;uninstall:=false,
-				SLING-INF/content/lostpwd;path:=/lostpwd;overwriteProperties:=true;uninstall:=false,
-				SLING-INF/content/devwidgets;path:=/devwidgets;ignoreImportProviders:="xml,json,html,jar,zip";uninstall:=false;overwrite:=true,
-				</Sling-Initial-Content>            
-			</instructions>
+      			</instructions>
           </configuration>
         </plugin>
       </plugins>
