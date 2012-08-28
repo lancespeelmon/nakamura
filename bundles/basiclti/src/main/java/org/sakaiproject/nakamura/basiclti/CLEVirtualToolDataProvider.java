@@ -48,7 +48,7 @@ import javax.servlet.ServletException;
  * Specific to CLE tools provided by LTI.
  */
 @Service
-@SlingServlet(methods = { "GET" }, generateService = true, paths = { "/var/basiclti/cletools" })
+@SlingServlet(methods = { "GET" }, generateService = true, paths = { "/var/basiclti/cletools" }, metatype = true)
 public class CLEVirtualToolDataProvider extends SlingSafeMethodsServlet implements
     VirtualToolDataProvider {
   private static final long serialVersionUID = 1871722416187493177L;
