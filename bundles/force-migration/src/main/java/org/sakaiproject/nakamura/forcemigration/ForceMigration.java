@@ -17,6 +17,24 @@
  */
 package org.sakaiproject.nakamura.forcemigration;
 
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.sling.SlingServlet;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.service.component.ComponentContext;
+import org.sakaiproject.nakamura.api.files.FileMigrationService;
+import org.sakaiproject.nakamura.api.lite.Repository;
+import org.sakaiproject.nakamura.api.lite.Session;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
+import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
+import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.api.lite.content.ContentManager;
+import org.sakaiproject.nakamura.util.PathUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -31,34 +49,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.jcr.RepositoryException;
+
 import javax.servlet.ServletException;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.ReferenceCardinality;
-import org.apache.felix.scr.annotations.ReferencePolicy;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
-import org.apache.sling.jcr.api.SlingRepository;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.service.component.ComponentContext;
-import org.sakaiproject.nakamura.api.files.FileMigrationService;
-import org.sakaiproject.nakamura.api.lite.Repository;
-import org.sakaiproject.nakamura.api.lite.Session;
-import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.api.lite.content.ContentManager;
-import org.sakaiproject.nakamura.util.PathUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.servlet.http.HttpServletResponse;
 
-
-
-@SlingServlet(methods = "GET", paths = "/system/forcemigration", generateComponent=true)
-public class ForceMigration extends SlingSafeMethodsServlet
-{
+@SlingServlet(methods = "GET", paths = "/system/forcemigration", generateComponent = true)
+public class ForceMigration extends SlingSafeMethodsServlet {
+  private static final long serialVersionUID = 1L;
   private Logger LOGGER = LoggerFactory.getLogger(ForceMigration.class);
 
   @Reference
@@ -72,9 +69,7 @@ public class ForceMigration extends SlingSafeMethodsServlet
   ContentManager cm;
   SwissArmyClassLoader swissArmy;
 
-
-  public void activate(ComponentContext context)
-  {
+  public void activate(ComponentContext context) {
     componentContext = context;
     bundleContext = componentContext.getBundleContext();
 
@@ -88,17 +83,15 @@ public class ForceMigration extends SlingSafeMethodsServlet
     }
   }
 
-
-
   /**
-   * Scary classloader trickery time.  Search for a class by querying the
-   * classloaders of every loaded bundle until we find a match.  Your
-   * Private-Package headers don't scare ME.
+   * Scary classloader trickery time. Search for a class by querying the classloaders of
+   * every loaded bundle until we find a match. Your Private-Package headers don't scare
+   * ME.
    **/
-  class SwissArmyClassLoader extends URLClassLoader
-  {
+  class SwissArmyClassLoader extends URLClassLoader {
     ClassLoader baseLoader;
 
+    @SuppressWarnings({ "rawtypes" })
     private ConcurrentHashMap<String, Class> classCache = new ConcurrentHashMap<String, Class>();
 
     public SwissArmyClassLoader() {
@@ -110,13 +103,13 @@ public class ForceMigration extends SlingSafeMethodsServlet
       this.baseLoader = baseLoader;
     }
 
-    protected Class findClass(String name) throws ClassNotFoundException
-    {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    protected Class findClass(String name) throws ClassNotFoundException {
       if (baseLoader != null) {
         try {
           return baseLoader.loadClass(name);
         } catch (ClassNotFoundException e) {
-          // OK... you asked for it
+          ; // OK... you asked for it
         }
       }
 
@@ -137,10 +130,8 @@ public class ForceMigration extends SlingSafeMethodsServlet
       throw new ClassNotFoundException("Couldn't find class: " + name);
     }
 
-
-    public Class findClassInAnyBundle(String name)
-      throws ClassNotFoundException
-    {
+    @SuppressWarnings("rawtypes")
+    public Class findClassInAnyBundle(String name) throws ClassNotFoundException {
       if (classCache.get(name) == null) {
         classCache.put(name, findClass(name));
       }
@@ -151,34 +142,28 @@ public class ForceMigration extends SlingSafeMethodsServlet
     }
   }
 
-
-
   /**
-   * Using a custom classloader at run-time requires a fair bit of reflection.
-   * For example, I've been reflecting on whether I really want to write Java at
-   * all.  While I'm figuring that out, maybe this class will make life easier.
+   * Using a custom classloader at run-time requires a fair bit of reflection. For
+   * example, I've been reflecting on whether I really want to write Java at all. While
+   * I'm figuring that out, maybe this class will make life easier.
    **/
-  class ReflectionObject
-  {
+  class ReflectionObject {
+    @SuppressWarnings("rawtypes")
     private Class clz;
     private Object obj;
 
-
-    public ReflectionObject(Class clz, Object obj)
-    {
+    @SuppressWarnings("rawtypes")
+    public ReflectionObject(Class clz, Object obj) {
       this.clz = clz;
       this.obj = obj;
     }
 
-
-    public ReflectionObject(String className, Object obj) throws ClassNotFoundException
-    {
+    public ReflectionObject(String className, Object obj) throws ClassNotFoundException {
       this(swissArmy.findClassInAnyBundle(className), obj);
     }
 
-
-    public Object call(String methodName, Object ... args) throws Exception
-    {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Object call(String methodName, Object... args) throws Exception {
       Class[] types = new Class[args.length];
 
       for (int i = 0; i < args.length; i++) {
@@ -189,24 +174,20 @@ public class ForceMigration extends SlingSafeMethodsServlet
 
       return m.invoke(obj, args);
     }
-    
 
-    public Object getField(String fieldName)
-      throws Exception
-    {
+    public Object getField(String fieldName) throws Exception {
       Field field = clz.getDeclaredField(fieldName);
       field.setAccessible(true);
       return field.get(obj);
     }
   }
 
-
   /**
    * Finally... the bits that actually do the migration.
    **/
-  private int dumpAllPaths(ReflectionObject storageClient,
-                           File pathList) throws Exception
-  {
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  private int dumpAllPaths(ReflectionObject storageClient, File pathList)
+      throws Exception {
     FileWriter outFile = null;
     Iterator allPaths = null;
 
@@ -214,16 +195,16 @@ public class ForceMigration extends SlingSafeMethodsServlet
 
     try {
       outFile = new FileWriter(pathList);
-      allPaths = (Iterator)storageClient.call("listAll", "n", "cn");
+      allPaths = (Iterator) storageClient.call("listAll", "n", "cn");
 
       while (allPaths.hasNext()) {
         lineCount++;
-        ReflectionObject row = new ReflectionObject("org.sakaiproject.nakamura.lite.storage.SparseRow",
-                                                    allPaths.next());
+        ReflectionObject row = new ReflectionObject(
+            "org.sakaiproject.nakamura.lite.storage.SparseRow", allPaths.next());
         Map<String, Object> props = (Map<String, Object>) row.call("getProperties");
 
         if (props.containsKey("_path") && !props.containsKey("_:cid")) {
-          outFile.write((String)props.get("_path"));
+          outFile.write((String) props.get("_path"));
           outFile.write("\n");
         }
       }
@@ -234,22 +215,18 @@ public class ForceMigration extends SlingSafeMethodsServlet
 
       if (allPaths != null) {
         new ReflectionObject("org.sakaiproject.nakamura.lite.storage.Disposable",
-                             allPaths)
-          .call("close");
+            allPaths).call("close");
       }
     }
 
     return lineCount;
   }
 
-
-  private void migratePath(String path)
-  {
+  private void migratePath(String path) {
     try {
       Content content = cm.get(path);
 
-      if (content != null &&
-          migrationService.fileContentNeedsMigration(content)) {
+      if (content != null && migrationService.fileContentNeedsMigration(content)) {
         LOGGER.info("Need to migrate path: {}", path);
         migrationService.migrateFileContent(content);
       }
@@ -263,26 +240,19 @@ public class ForceMigration extends SlingSafeMethodsServlet
     }
   }
 
-
-  private void migrateVersions(String path)
-  {
+  private void migrateVersions(String path) {
     try {
       List<String> versions = cm.getVersionHistory(path);
 
       for (String version : versions) {
         Content content = cm.getVersion(path, version);
 
-        if (migrationService.isPageNode(content, cm) &&
-            !content.hasProperty("rows")) {
+        if (migrationService.isPageNode(content, cm) && !content.hasProperty("rows")) {
 
           Content parentPage = cm.get(PathUtils.getParentReference(content.getPath()));
 
           LOGGER.info("Need to migrate single page '{}' of '{}' (version: {})",
-                      new String[] {
-                        content.getPath(),
-                        parentPage.getPath(),
-                        version
-                      });
+              new String[] { content.getPath(), parentPage.getPath(), version });
 
           migrationService.migrateSinglePage(parentPage, content);
         }
@@ -293,53 +263,66 @@ public class ForceMigration extends SlingSafeMethodsServlet
     }
   }
 
+  /**
+   * {@inheritDoc}
+   * 
+   * @see org.apache.sling.api.servlets.SlingSafeMethodsServlet#doGet(org.apache.sling.api.SlingHttpServletRequest,
+   *      org.apache.sling.api.SlingHttpServletResponse)
+   */
+  @Override
+  protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
+      throws ServletException, IOException {
 
-  protected void doGet(SlingHttpServletRequest request,
-                       SlingHttpServletResponse response)
-    throws ServletException, IOException
-  {
     try {
-      boolean handleVersions = "true".equals(request.getParameter("handleVersions"));
+      final Session session = StorageClientUtils.adaptToSession(request
+          .getResourceResolver().adaptTo(javax.jcr.Session.class));
+      final AuthorizableManager aM = session.getAuthorizableManager();
+      // only allow admins to call this end REST point
+      if (aM.getUser().isAdmin()) {
+        boolean handleVersions = "true".equals(request.getParameter("handleVersions"));
 
-      // Sigh.  This is going to be tedious.
-      ReflectionObject cmImpl = new ReflectionObject("org.sakaiproject.nakamura.lite.content.ContentManagerImpl",
-                                                     cm);
+        // Sigh. This is going to be tedious.
+        ReflectionObject cmImpl = new ReflectionObject(
+            "org.sakaiproject.nakamura.lite.content.ContentManagerImpl", cm);
 
-      ReflectionObject storageClient = new ReflectionObject("org.sakaiproject.nakamura.lite.storage.StorageClient",
-                                                            cmImpl.getField("client"));
+        ReflectionObject storageClient = new ReflectionObject(
+            "org.sakaiproject.nakamura.lite.storage.StorageClient",
+            cmImpl.getField("client"));
 
-      File pathList = File.createTempFile("oae-paths", "txt");
-      pathList.deleteOnExit();
+        File pathList = File.createTempFile("oae-paths", "txt");
+        pathList.deleteOnExit();
 
-      LOGGER.info("Dumping all paths to {}", pathList);
-      int totalPathCount = dumpAllPaths(storageClient, pathList);
-      LOGGER.info("Finished generating path list.  Here we go!");
+        LOGGER.info("Dumping all paths to {}", pathList);
+        int totalPathCount = dumpAllPaths(storageClient, pathList);
+        LOGGER.info("Finished generating path list.  Here we go!");
 
+        BufferedReader paths = new BufferedReader(new FileReader(pathList));
 
-      BufferedReader paths = new BufferedReader(new FileReader(pathList));
+        try {
+          String path;
+          int pathCount = 0;
+          while ((path = paths.readLine()) != null) {
+            pathCount++;
 
-      try {
-        String path;
-        int pathCount = 0;
-        while ((path = paths.readLine()) != null) {
-          pathCount++;
+            if ((pathCount % 1000) == 0) {
+              LOGGER.info("Migrated {} out of {} paths.", pathCount, totalPathCount);
+            }
 
-          if ((pathCount % 1000) == 0) {
-            LOGGER.info("Migrated {} out of {} paths.", pathCount, totalPathCount);
+            migratePath(path);
+
+            if (handleVersions) {
+              migrateVersions(path);
+            }
           }
-
-          migratePath(path);
-
-          if (handleVersions) {
-            migrateVersions(path);
-          }
+        } finally {
+          paths.close();
         }
-      } finally {
-        paths.close();
+      } else {
+        response.sendError(HttpServletResponse.SC_FORBIDDEN);
+        return;
       }
     } catch (Exception e) {
       throw new ServletException(e);
     }
   }
 }
-

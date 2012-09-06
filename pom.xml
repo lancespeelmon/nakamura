@@ -118,6 +118,7 @@
         <module>bundles/org.json</module>
         <module>bundles/perf4j</module>
         <module>bundles/jax-rs</module>
+        <module>bundles/force-migration</module>
         <module>testscripts</module>
       </modules>
     </profile>
